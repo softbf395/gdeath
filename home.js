@@ -1,32 +1,32 @@
-const redeemBtn = document.getElementById("redeemBtn");
-const giftCodeInput = document.getElementById("giftCodeInput");
-const messageDiv = document.getElementById("message");
+// Initialize Supabase client
+const SUPABASE_URL = 'https://umfhjmrkzsrscskmqugy.supabase.co/';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZmhqbXJrenNyc2Nza21xdWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjUzODYxNTIsImV4cCI6MjA0MDk2MjE1Mn0.YSiQjUm85e84yFflphLch9wQ_G_uWhQ4z6SMhN-Wa_M';
 
-redeemBtn.addEventListener("click", async () => {
-    const code = giftCodeInput.value.trim();
-    
-    if (!code) {
-        messageDiv.textContent = "Please enter a gift code.";
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+document.getElementById('redeemBtn').addEventListener('click', async () => {
+    const giftCode = document.getElementById('giftCodeInput').value;
+    const messageDiv = document.getElementById('message');
+
+    if (!giftCode) {
+        messageDiv.textContent = 'Please enter a gift code.';
         return;
     }
-    
-    // Send the gift code to the server to validate it
-    try {
-        const response = await fetch('/redeem_code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code })
-        });
 
-        const result = await response.json();
-        
-        if (result.valid) {
-            window.location.href = 'download.html'; // Redirect to download page if valid
-        } else {
-            window.location.href = 'step1.html'; // Redirect to Step 1 if invalid
-        }
-    } catch (err) {
-        console.error(err);
-        messageDiv.textContent = "An error occurred. Try again later.";
+    // Query the giftcodes table
+    const { data, error } = await supabase
+        .from('giftcodes')
+        .select('*')
+        .eq('code', giftCode)
+        .single();
+
+    if (error) {
+        messageDiv.textContent = 'Error: ' + error.message;
+    } else if (data) {
+        messageDiv.textContent = 'Success! Code redeemed.';
+        // Optionally, update the table to mark the code as used
+        // await supabase.from('giftcodes').update({ redeemed: true }).eq('code', giftCode);
+    } else {
+        messageDiv.textContent = 'Invalid gift code.';
     }
 });
